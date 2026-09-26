@@ -15,6 +15,7 @@ function ProductSection() {
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
     const [added, setAdded] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -40,16 +41,28 @@ function ProductSection() {
     }, [id, URL]);
 
     const handleAddToCart = async () => {
-        if (!product) return;
-        await addToCart(product, quantity);
-        setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
+        if (!product || isAdding) return;
+        setIsAdding(true);
+        try {
+            await addToCart(product, quantity);
+            setIsAdding(false);
+            setAdded(true);
+            setTimeout(() => setAdded(false), 2000);
+        } catch (err) {
+            setIsAdding(false);
+        }
     };
 
     const handleBuyNow = async () => {
-        if (!product) return;
-        await addToCart(product, quantity);
-        nav("/cart");
+        if (!product || isAdding) return;
+        setIsAdding(true);
+        try {
+            await addToCart(product, quantity);
+            setIsAdding(false);
+            nav("/cart");
+        } catch (err) {
+            setIsAdding(false);
+        }
     };
 
     const imageUrl = product 
@@ -161,14 +174,31 @@ function ProductSection() {
                                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                                     <button
                                         onClick={handleAddToCart}
+                                        disabled={isAdding}
                                         className={`flex-1 py-3.5 px-6 font-bold rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer ${
-                                            added 
-                                                ? "bg-emerald-600 text-white" 
-                                                : "bg-[#ea846b] text-white hover:bg-[#d96f57]"
+                                            isAdding
+                                                ? "bg-amber-500 text-white cursor-wait opacity-90"
+                                                : added 
+                                                    ? "bg-emerald-600 text-white" 
+                                                    : "bg-[#ea846b] text-white hover:bg-[#d96f57]"
                                         }`}
                                     >
-                                        <i className={`fa-solid ${added ? "fa-check" : "fa-cart-shopping"}`}></i>
-                                        <span>{added ? "Added to Cart!" : "Add to Cart"}</span>
+                                        {isAdding ? (
+                                            <>
+                                                <i className="fa-solid fa-circle-notch fa-spin"></i>
+                                                <span>Adding to Cart...</span>
+                                            </>
+                                        ) : added ? (
+                                            <>
+                                                <i className="fa-solid fa-check"></i>
+                                                <span>Added to Cart!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fa-solid fa-cart-shopping"></i>
+                                                <span>Add to Cart</span>
+                                            </>
+                                        )}
                                     </button>
 
                                     <button

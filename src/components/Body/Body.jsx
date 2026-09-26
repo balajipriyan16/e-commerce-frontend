@@ -8,6 +8,7 @@ function Body({ searchTerm = "", selectedCategory = "All" }) {
     const nav = useNavigate();
     const { addToCart } = useAuth();
     const [addedId, setAddedId] = useState(null);
+    const [addingId, setAddingId] = useState(null);
 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -39,14 +40,21 @@ function Body({ searchTerm = "", selectedCategory = "All" }) {
 
     const handleAddToCart = async (item, e) => {
         e.stopPropagation();
-        await addToCart(item);
-        setAddedId(item._id);
-        setTimeout(() => setAddedId(null), 1500);
+        if (addingId === item._id) return;
+        setAddingId(item._id);
+        try {
+            await addToCart(item);
+            setAddingId(null);
+            setAddedId(item._id);
+            setTimeout(() => setAddedId(null), 1800);
+        } catch (err) {
+            setAddingId(null);
+        }
     };
 
     return (
         <>
-            <div className="bg-[#f8f2e7] py-16 px-6 md:px-12 lg:px-30 min-h-[70vh]">
+            <div className="bg-[#f8f2e7] flex-1 py-16 px-6 md:px-12 lg:px-30 min-h-[85vh]">
                 <div className="max-w-7xl mx-auto">
 
                     <div className="text-center mb-12">
@@ -151,14 +159,31 @@ function Body({ searchTerm = "", selectedCategory = "All" }) {
 
                                             <button 
                                                 onClick={(e) => handleAddToCart(item, e)}
+                                                disabled={addingId === item._id}
                                                 className={`w-full font-semibold py-2.5 rounded-xl transition duration-300 cursor-pointer flex items-center justify-center gap-2 ${
-                                                    addedId === item._id 
-                                                        ? "bg-emerald-600 text-white" 
-                                                        : "bg-[#ea846b] text-white hover:bg-[#d96f57]"
+                                                    addingId === item._id
+                                                        ? "bg-amber-500 text-white cursor-wait opacity-90"
+                                                        : addedId === item._id 
+                                                            ? "bg-emerald-600 text-white" 
+                                                            : "bg-[#ea846b] text-white hover:bg-[#d96f57]"
                                                 }`}
                                             >
-                                                <i className={`fa-solid ${addedId === item._id ? "fa-check" : "fa-cart-shopping"}`}></i>
-                                                <span>{addedId === item._id ? "Added to Cart!" : "Add to Cart"}</span>
+                                                {addingId === item._id ? (
+                                                    <>
+                                                        <i className="fa-solid fa-circle-notch fa-spin"></i>
+                                                        <span>Adding to Cart...</span>
+                                                    </>
+                                                ) : addedId === item._id ? (
+                                                    <>
+                                                        <i className="fa-solid fa-check"></i>
+                                                        <span>Added to Cart!</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="fa-solid fa-cart-shopping"></i>
+                                                        <span>Add to Cart</span>
+                                                    </>
+                                                )}
                                             </button>
                                         </div>
                                     </div>
